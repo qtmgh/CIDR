@@ -103,7 +103,6 @@ User reports no internet:
 * Network: verify IP address and default gateway
 * Application: test browser
 
-Panels reward this logic.
 
 ---
 
