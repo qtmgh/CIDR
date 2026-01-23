@@ -103,7 +103,6 @@ User reports no internet:
 * Network: verify IP address and default gateway
 * Application: test browser
 
-Panels reward this logic.
 
 ---
 
@@ -317,7 +316,7 @@ Interview phrasing:
 
 ---
 
-## Risk Awareness (Panels Love This)
+## Risk Awareness (IMPORTANT)
 
 Explicitly state what you avoid.
 
@@ -388,8 +387,6 @@ Before finishing any answer, ask yourself:
 * Did I mention policy
 * Did I escalate appropriately
 * Did I document
-
-If yes, you scored well.
 
 ---
 
