@@ -392,8 +392,6 @@ Before finishing any answer, ask yourself:
 
 # 10-Minute Daily Review Routine
 
-Do this once per day. No more. No less.
-
 Minute 1–2
 Read the Universal Answer Framework out loud.
 
