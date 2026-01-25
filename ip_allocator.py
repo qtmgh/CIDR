@@ -1,4 +1,19 @@
-print("IP Allocator Module Loaded")
+NETWORK_BASE = "192.168.10"
+BASE_IP = "192.168.10.0"
+CIDR = 25
+RESERVED_RANGES = [
+    (1, 29, "Infrastructure"),
+]
+
+RESERVED_HOSTS = {
+    1: "Router",
+    10: "File Server",
+    20: "Printer A", 
+    21: "Printer B",
+}
+
+USER_START = 30
+
 
 def compute_network_details(base_ip, cidr):
     parts = base_ip.split(".")
@@ -14,28 +29,14 @@ def compute_network_details(base_ip, cidr):
     return network_host, broadcast_host
 
 
+def get_network_bounds():
+    network_host, broadcast_host = compute_network_details(BASE_IP, CIDR)
+    return network_host, broadcast_host
 
-NETWORK_BASE = "192.168.10"
-BASE_IP = "192.168.10.0"
-CIDR = 26
-RESERVED_RANGES= [
-    (1, 29, "Infrastructure"),
-]
 
-network_host, broadcast_host = compute_network_details(BASE_IP, CIDR)
-
-NETWORK_ADDRESS = network_host
-BROADCAST_ADDRESS = broadcast_host
-
-RESERVED_HOSTS = {
-    1: "Router",
-    10: "File Server",
-    20: "Printer A", 
-    21: "Printer B",
-}
-
-USER_START = 60
-USER_END = BROADCAST_ADDRESS - 1
+def get_user_end():
+    _, broadcast_host = get_network_bounds()
+    return broadcast_host - 1
 
 
 
@@ -49,9 +50,12 @@ def in_reserved_range(host):
     return None
 
 def is_valid_host(host):
-    if host == NETWORK_ADDRESS:
+    network_address, broadcast_address = get_network_bounds()
+    user_end = get_user_end()
+
+    if host == network_address:
         return False
-    if host == BROADCAST_ADDRESS:
+    if host == broadcast_address:
         return False
     if host in RESERVED_HOSTS:
         return False
@@ -62,14 +66,17 @@ def is_valid_host(host):
     
     if host < USER_START:
         return False
+    if host > user_end:
+        return False
     
     return True
 
 def validate_policy():
-    if USER_START <= NETWORK_ADDRESS:
+    network_address, broadcast_address = get_network_bounds()
+    if USER_START <= network_address:
         raise RuntimeError("USER_START is at or below the network address.")
     
-    if USER_START >= BROADCAST_ADDRESS:
+    if USER_START >= broadcast_address:
         raise RuntimeError("USER_START is at or above the broadcast address.")
     
     # USER_START must not sit inside a reserved range
@@ -79,9 +86,9 @@ def validate_policy():
     
     # Make sure reserved ranges do not include network or broadcast
     for start, end, label in RESERVED_RANGES:
-        if start <= NETWORK_ADDRESS <= end:
+        if start <= network_address <= end:
             raise RuntimeError("Reserved range includes network address: " + label)
-        if start <= BROADCAST_ADDRESS <= end:
+        if start <= broadcast_address <= end:
             raise RuntimeError("Reserved range includes broadcast address: " + label)
 
 
@@ -89,8 +96,9 @@ def allocate_users(count):
     validate_policy()
     allocated = []
     current = USER_START
+    user_end = get_user_end()
 
-    while len(allocated) < count and current <= USER_END:
+    while len(allocated) < count and current <= user_end:
         if is_valid_host(current):
             allocated.append(make_ip(current))
             current += 1
@@ -105,14 +113,15 @@ def allocate_users(count):
 def main():
     users_needed = 18
     users_ips = allocate_users(users_needed)
+    network_address, broadcast_address = get_network_bounds()
 
     print("Allocated user IPs:")
     for ip in users_ips:
         print(ip)
     
-print("Network address:", make_ip(NETWORK_ADDRESS))
-print("Broadcast address:", make_ip(BROADCAST_ADDRESS))
-print("Usable range:", make_ip(NETWORK_ADDRESS + 1), "to", make_ip(BROADCAST_ADDRESS - 1))
+    print("Network address:", make_ip(network_address))
+    print("Broadcast address:", make_ip(broadcast_address))
+    print("Usable range:", make_ip(network_address + 1), "to", make_ip(broadcast_address - 1))
 
 
 if __name__ == "__main__":
