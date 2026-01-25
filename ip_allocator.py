@@ -18,6 +18,9 @@ def compute_network_details(base_ip, cidr):
 NETWORK_BASE = "192.168.10"
 BASE_IP = "192.168.10.0"
 CIDR = 26
+RESERVED_RANGES= [
+    (1, 29, "Infrastructure"),
+]
 
 network_host, broadcast_host = compute_network_details(BASE_IP, CIDR)
 
@@ -31,13 +34,19 @@ RESERVED_HOSTS = {
     21: "Printer B",
 }
 
-USER_START = 30
+USER_START = 60
 USER_END = BROADCAST_ADDRESS - 1
 
 
 
 def make_ip(host_number):
     return NETWORK_BASE + "." + str(host_number)
+
+def in_reserved_range(host):
+    for start, end, label in RESERVED_RANGES:
+        if start <= host <= end:
+            return label
+    return None
 
 def is_valid_host(host):
     if host == NETWORK_ADDRESS:
@@ -46,11 +55,38 @@ def is_valid_host(host):
         return False
     if host in RESERVED_HOSTS:
         return False
+    
+    label = in_reserved_range(host)
+    if label is not None:
+        return False
+    
     if host < USER_START:
         return False
+    
     return True
 
+def validate_policy():
+    if USER_START <= NETWORK_ADDRESS:
+        raise RuntimeError("USER_START is at or below the network address.")
+    
+    if USER_START >= BROADCAST_ADDRESS:
+        raise RuntimeError("USER_START is at or above the broadcast address.")
+    
+    # USER_START must not sit inside a reserved range
+    label = in_reserved_range(USER_START)
+    if label is not None:
+        raise RuntimeError(f"USER_START falls within reserved range: " + label)
+    
+    # Make sure reserved ranges do not include network or broadcast
+    for start, end, label in RESERVED_RANGES:
+        if start <= NETWORK_ADDRESS <= end:
+            raise RuntimeError("Reserved range includes network address: " + label)
+        if start <= BROADCAST_ADDRESS <= end:
+            raise RuntimeError("Reserved range includes broadcast address: " + label)
+
+
 def allocate_users(count):
+    validate_policy()
     allocated = []
     current = USER_START
 
