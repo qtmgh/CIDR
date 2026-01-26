@@ -1,0 +1,1 @@
+python3 cli.py --base-ip 192.168.10.0 --cidr 26 --users 18 --user-start 30
